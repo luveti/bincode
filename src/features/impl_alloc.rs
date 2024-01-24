@@ -52,11 +52,7 @@ impl enc::write::Writer for VecWriter {
 /// [config]: config/index.html
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub fn encode_to_vec<E: enc::Encode, C: Config>(val: E, config: C) -> Result<Vec<u8>, EncodeError> {
-    let size = {
-        let mut size_writer = enc::EncoderImpl::<_, C>::new(SizeWriter::default(), config);
-        val.encode(&mut size_writer)?;
-        size_writer.into_writer().bytes_written
-    };
+    let size = crate::encoded_size(&val, config)?;
     let writer = VecWriter::with_capacity(size);
     let mut encoder = enc::EncoderImpl::<_, C>::new(writer, config);
     val.encode(&mut encoder)?;

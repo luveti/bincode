@@ -86,7 +86,7 @@ pub(crate) mod utils;
 pub(crate) mod varint;
 
 use de::{read::Reader, Decoder};
-use enc::write::Writer;
+use enc::write::{SizeWriter, Writer};
 pub use features::*;
 
 pub mod config;
@@ -130,6 +130,20 @@ pub fn encode_into_writer<E: enc::Encode, W: Writer, C: Config>(
     let mut encoder = enc::EncoderImpl::<_, C>::new(writer, config);
     val.encode(&mut encoder)?;
     Ok(())
+}
+
+/// Returns the size that an object would be if encoded using Bincode with the passed configuration.
+///
+/// See the [config] module for more information on configurations.
+///
+/// [config]: config/index.html
+pub fn encoded_size<E: enc::Encode, C: Config>(
+    val: &E,
+    config: C,
+) -> Result<usize, error::EncodeError> {
+    let mut size_writer = enc::EncoderImpl::<_, C>::new(SizeWriter::default(), config);
+    val.encode(&mut size_writer)?;
+    Ok(size_writer.into_writer().bytes_written)
 }
 
 /// Attempt to decode a given type `D` from the given slice. Returns the decoded output and the amount of bytes read.
